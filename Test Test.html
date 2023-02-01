@@ -1,0 +1,153 @@
+<!-- The core Firebase JS SDK is always required and must be listed first -->
+<script src="https://www.gstatic.com/firebasejs/6.6.1/firebase-app.js"></script>
+ 
+<!-- include firebase database -->
+<script src="https://www.gstatic.com/firebasejs/6.6.1/firebase-database.js"></script>
+ 
+<script>
+    // Your web app's Firebase configuration
+    var firebaseConfig = {
+        apiKey: "AIzaSyB9XhRzkpjkyuAZLaMSxaLQJs7DwwNESmY",
+    authDomain: "tradingo-824d6.firebaseapp.com",
+    databaseURL: "https://tradingo-824d6-default-rtdb.firebaseio.com",
+    projectId: "tradingo-824d6",
+    storageBucket: "tradingo-824d6.appspot.com",
+    messagingSenderId: "273813724823",
+    appId: "1:273813724823:web:5af639aa92782227fe53d2",
+    measurementId: "G-K74SN99P90"
+    };
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig); 
+ 
+    var myName = prompt("Enter your name");
+</script>
+     
+<!-- create a form to send message -->
+<form onsubmit="return sendMessage();">
+    <input id="message" placeholder="Enter message" autocomplete="off">
+ 
+    <input type="submit">
+</form>
+     <!-- create a list -->
+<ul id="messages"></ul>
+
+
+
+
+
+
+
+
+<form id="LoginForm">
+    <input type="text" placeholder="Email" id="emailLogin" >
+
+    <input type="password" placeholder="Password" id="passwordLogin" >
+    <input type="checkbox" id="TogglePass" onclick="TogglepassLogin()">Show Password
+
+    <button type="button" id="submitDataLogin" class="btn">Log in</button>
+    <a href="">Forgot password</a>
+</form>
+
+<script type="module">
+
+
+// Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.13.0/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword,  signInWithEmailAndPassword, signOut, sendSignInLinkToEmail,onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.13.0/firebase-auth.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.13.0/firebase-analytics.js";
+  import { getDatabase, set, ref, update} from "https://www.gstatic.com/firebasejs/9.13.0/firebase-database.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth();
+  const database = getDatabase();
+
+
+var email = document.getElementById('emailLogin').value;
+var password = document.getElementById('passwordLogin').value;
+
+
+signInWithEmailAndPassword(auth, email, password)
+.then((userCredential) => {
+// Signed up
+const user = userCredential.user;
+// ...
+var today = new Date();
+var date = today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
+var time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
+var dateTime = date+' '+time;
+
+update(ref(database, 'users/' + user.uid), {
+
+last_login:dateTime,
+})
+
+
+.then (() => {
+console.log("User is signed up");
+})
+
+    })
+  
+    .catch((error) => {
+
+// ..
+swal({
+title: 'Oops!',
+text: 'You have entered Incorrect Email or Password, Please try again.',
+type: "error"
+})
+
+
+});
+
+
+var uid = user.uid;
+
+    function sendMessage() {
+        // get message
+        var message = document.getElementById("message").value;
+ 
+        // save in database
+        firebase.database().ref("users"/uid).push().set({
+            "sender": myName,
+            "message": message
+        });
+ 
+        // prevent form from submitting
+        return false;
+    }
+</script>
+
+     
+<script>
+
+firebase.database().ref("users"/uid).on("child_added", function (snapshot) {
+        var html = "";
+        // give each message a unique ID
+        html += "<li id='message-" + snapshot.key + "'>";
+        // show delete button if message is sent by me
+        if (snapshot.val().sender == myName) {
+            html += "<button data-id='" + snapshot.key + "' onclick='deleteMessage(this);'>";
+                html += "Delete";
+            html += "</button>";
+        }
+        html += snapshot.val().sender + ": " + snapshot.val().message;
+        html += "</li>";
+ 
+        document.getElementById("messages").innerHTML += html;
+    });
+
+    function deleteMessage(self) {
+    // get message ID
+    var messageId = self.getAttribute("data-id");
+ 
+    // delete message
+    firebase.database().ref("users"/uid).child(messageId).remove();
+}
+ 
+// attach listener for delete message
+firebase.database().ref("users"/uid).on("child_removed", function (snapshot) {
+    // remove message node
+    document.getElementById("message-" + snapshot.key).innerHTML = "This message has been removed";
+});
+</script>
